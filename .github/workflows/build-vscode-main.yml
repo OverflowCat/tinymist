@@ -42,9 +42,8 @@ jobs:
             rust-target: aarch64-unknown-linux-ohos
             platform: ohos
             arch: arm64
-            vscode_target: ohos-arm64
+            vscode_target: linux-arm64
             regular_build: 'true'
-            ci_only: 'true'
     name: build (${{ matrix.platform }}-${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
     env:

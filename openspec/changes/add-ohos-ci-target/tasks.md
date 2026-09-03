@@ -10,9 +10,9 @@
 
 ## 3. OpenHarmony Artifacts
 
-- [ ] 3.1 Produce and upload a release-mode OHOS binary archive in the downstream packaging layout, then verify its artifact is available in GitHub Actions.
+- [x] 3.1 Produce and upload a release-mode OHOS binary archive in the downstream packaging layout, then verify its artifact is available in GitHub Actions.
 - [x] 3.2 Add OHOS ARM64 to the VS Code packaging matrix, skip unsupported GPU viewer steps, and verify the workflow parses locally.
-- [ ] 3.3 Trial `ohos-arm64` as the VSIX target in GitHub Actions and record whether `vsce` accepts it.
+- [x] 3.3 Trial `ohos-arm64` as the VSIX target in GitHub Actions and record whether `vsce` accepts it.
 - [ ] 3.4 Resolve any VSIX target incompatibility without publishing a misleading Marketplace package, then verify downloadable OHOS Tinymist and Typst Preview VSIX artifacts are produced.
 
 ## 4. Final Validation

@@ -42,14 +42,14 @@ The top-level `build` reusable-workflow call will depend on `checks-ohos`. This 
 
 ### Add an experimental OHOS VS Code matrix entry
 
-`build-vscode-main.yml` will add an `ohos-arm64` entry backed by `aarch64-unknown-linux-ohos`. The first trial will pass `ohos-arm64` to `vsce` directly. If `vsce` rejects it, the matrix will keep the unique OHOS artifact name while using the nearest supported VS Code platform identifier only for VSIX metadata.
+`build-vscode-main.yml` will add an `ohos-arm64` entry backed by `aarch64-unknown-linux-ohos`. A GitHub Actions trial confirmed that `vsce` rejects `ohos-arm64` because it is not a recognized VS Code target. The matrix will therefore keep the unique OHOS artifact name while using `linux-arm64`, the nearest supported VS Code platform identifier, only for VSIX metadata.
 
-The OHOS entry will package the Tinymist and Typst Preview extensions but skip the GPU viewer, since no OHOS viewer binary exists. It will run for normal branch CI as an experimental pre-release artifact and be disabled for tagged release/nightly publishing to avoid publishing an unsupported or colliding Marketplace platform package.
+The OHOS entry will package the Tinymist and Typst Preview extensions but skip the GPU viewer, since no OHOS viewer binary exists. It will run for normal branch CI as an experimental pre-release artifact. Tagged workflows may retain the uniquely named files as GitHub release assets, but Marketplace and Open VSX publication will explicitly filter them out to avoid publishing a colliding `linux-arm64` platform package.
 
 ## Risks / Trade-offs
 
 - [Some transitive native dependencies may not support OHOS] -> Use GitHub Actions trial results to identify the narrowest source-level or feature adjustment required; do not weaken the target build to a host-only check.
 - [SDK downloads increase CI time and storage] -> Install only the native component and retain the setup action's cache.
 - [A floating action tag could change behavior] -> Pin the setup action to its released commit SHA and annotate the corresponding version.
-- [VS Code tooling may reject `ohos-arm64` as an unknown target] -> Trial the native identifier first, then separate the artifact label from VSIX target metadata if a supported compatibility identifier is required.
+- [VS Code tooling rejects `ohos-arm64` as an unknown target] -> Use `linux-arm64` only for VSIX metadata while retaining the `ohos-arm64` artifact label.
 - [Using `linux-arm64` metadata could collide with the GNU/Linux package] -> Keep OHOS VSIX artifacts CI-only and uniquely named until the target editor defines a distinct platform identifier.

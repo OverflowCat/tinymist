@@ -36,10 +36,14 @@ The CI system SHALL include OpenHarmony ARM64 in the VS Code packaging matrix an
 - **WHEN** the OpenHarmony binary and shared VS Code assets are available
 - **THEN** the editor packaging matrix produces uniquely named OHOS ARM64 VSIX artifacts
 
+#### Scenario: VSIX target compatibility
+- **WHEN** the VSIX tool rejects the native `ohos-arm64` platform identifier
+- **THEN** the workflow uses `linux-arm64` for package metadata while retaining unique `ohos-arm64` filenames and artifact names
+
 #### Scenario: GPU viewer unavailable
 - **WHEN** the OpenHarmony matrix entry packages editor extensions without an OpenHarmony GPU viewer binary
 - **THEN** GPU viewer download, packaging, and upload steps are skipped for that entry
 
 #### Scenario: Marketplace release
 - **WHEN** a tagged release or nightly publish workflow runs
-- **THEN** the experimental OHOS VSIX is excluded from Marketplace publishing until a supported platform identifier is established
+- **THEN** the experimental OHOS VSIX is excluded from VS Code Marketplace and Open VSX publishing until a supported platform identifier is established
