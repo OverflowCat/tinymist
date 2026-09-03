@@ -201,6 +201,17 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Build Tinymist
         run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
+      - name: Install Node.js for OpenHarmony signing
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Sign OpenHarmony binary
+        run: |
+          npx --yes --package ohos-binary-sign@1.0.0 \
+            ohos-binary-sign sign \
+            -selfSign 1 \
+            -inFile "target/$RUST_TARGET/release/tinymist" \
+            -outFile "target/$RUST_TARGET/release/tinymist"
       - name: Package Tinymist
         run: |
           install -Dm755 \

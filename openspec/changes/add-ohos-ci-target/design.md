@@ -36,6 +36,10 @@ The setup action will install only the native SDK component. The job will export
 
 The job will run a release build of `tinymist-cli` for `aarch64-unknown-linux-ohos`. A build, rather than `cargo check`, verifies final target linking against the OpenHarmony SDK. The workflow-level `RUSTFLAGS=-Dwarnings` remains in effect. The binary will be archived using the `artifacts-build-local-<rust-target>` name and `tinymist-<rust-target>/tinymist` layout already consumed by the VS Code workflow.
 
+### Sign the binary before distribution
+
+After the release build, the job will install Node.js 24 and invoke the pinned `ohos-binary-sign@1.0.0` CLI with `-selfSign 1`, signing the binary in place before creating the archive. This keeps both the standalone OHOS artifact and the VSIX payload signed while avoiding unprovided certificate secrets for the experimental CI-only packages. A signing error fails the job before upload.
+
 ### Make the release workflow wait for the OHOS artifact
 
 The top-level `build` reusable-workflow call will depend on `checks-ohos`. This expresses artifact readiness without polling and lets the existing cross-workflow artifact download mechanism consume the OHOS archive.
@@ -53,3 +57,4 @@ The OHOS entry will package the Tinymist and Typst Preview extensions but skip t
 - [A floating action tag could change behavior] -> Pin the setup action to its released commit SHA and annotate the corresponding version.
 - [VS Code tooling rejects `ohos-arm64` as an unknown target] -> Use `linux-arm64` only for VSIX metadata while retaining the `ohos-arm64` artifact label.
 - [Using `linux-arm64` metadata could collide with the GNU/Linux package] -> Keep OHOS VSIX artifacts CI-only and uniquely named until the target editor defines a distinct platform identifier.
+- [Self-signed binaries may not satisfy a production device trust policy] -> Keep the packages experimental and out of Marketplace/Open VSX publication; replace self-signing with maintainer-provided signing credentials when a production distribution policy is established.
