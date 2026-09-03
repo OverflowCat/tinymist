@@ -46,7 +46,6 @@ jobs:
             regular_build: 'true'
             ci_only: 'true'
     name: build (${{ matrix.platform }}-${{ matrix.arch }})
-    if: matrix.ci_only != 'true' || !startsWith(github.ref, 'refs/tags/')
     runs-on: ${{ matrix.os }}
     env:
       target: ${{ matrix.platform }}-${{ matrix.arch }}
