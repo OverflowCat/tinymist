@@ -166,6 +166,42 @@ jobs:
       - name: Test tinymist
         run: cargo test --workspace --features tinymist/system --locked -- --skip=e2e
 
+  checks-ohos:
+    name: Build Tinymist (OpenHarmony ARM64)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      RUST_TARGET: aarch64-unknown-linux-ohos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ env.RUST_TARGET }}
+          cache-shared-key: ${{ env.RUST_TARGET }}
+          cache-save-if: false
+      - name: Setup OpenHarmony SDK
+        id: ohos-sdk
+        uses: openharmony-rs/setup-ohos-sdk@b312caf8a43bb836aa24c08f65f97e1f09a89cad # v1.0.1
+        with:
+          version: "5.1.0"
+          components: native
+      - name: Configure OpenHarmony toolchain
+        env:
+          OHOS_SDK_NATIVE: ${{ steps.ohos-sdk.outputs.ohos_sdk_native }}
+        run: |
+          set -euo pipefail
+          toolchain_bin="$OHOS_SDK_NATIVE/llvm/bin"
+          test -x "$toolchain_bin/aarch64-unknown-linux-ohos-clang"
+          {
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_OHOS_LINKER=$toolchain_bin/aarch64-unknown-linux-ohos-clang"
+            echo "CC_aarch64_unknown_linux_ohos=$toolchain_bin/aarch64-unknown-linux-ohos-clang"
+            echo "CXX_aarch64_unknown_linux_ohos=$toolchain_bin/aarch64-unknown-linux-ohos-clang++"
+            echo "AR_aarch64_unknown_linux_ohos=$toolchain_bin/llvm-ar"
+          } >> "$GITHUB_ENV"
+      - name: Build Tinymist
+        run: cargo build --locked -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
+
   prepare-build:
     runs-on: "ubuntu-latest"
     outputs:
