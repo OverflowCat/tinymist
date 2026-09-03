@@ -200,7 +200,19 @@ jobs:
             echo "AR_aarch64_unknown_linux_ohos=$toolchain_bin/llvm-ar"
           } >> "$GITHUB_ENV"
       - name: Build Tinymist
-        run: cargo build --locked -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
+        run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
+      - name: Package Tinymist
+        run: |
+          install -Dm755 \
+            "target/$RUST_TARGET/release/tinymist" \
+            "target/distrib/tinymist-$RUST_TARGET/tinymist"
+          tar -czf "target/distrib/tinymist-$RUST_TARGET.tar.gz" \
+            -C target/distrib "tinymist-$RUST_TARGET"
+      - name: Upload Tinymist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build-local-${{ env.RUST_TARGET }}
+          path: target/distrib/tinymist-${{ env.RUST_TARGET }}.tar.gz
 
   prepare-build:
     runs-on: "ubuntu-latest"
@@ -225,7 +237,7 @@ jobs:
       tag: ${{ needs.prepare-build.outputs.tag }}
 
   build:
-    needs: [prepare-build] # , announce
+    needs: [prepare-build, checks-ohos] # , announce
     permissions:
       contents: write
     uses: ./.github/workflows/release.yml

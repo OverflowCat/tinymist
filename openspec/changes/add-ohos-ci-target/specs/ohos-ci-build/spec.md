@@ -21,3 +21,25 @@ The CI system MUST select explicit OpenHarmony SDK and setup-action versions and
 #### Scenario: SDK provisioning
 - **WHEN** the OpenHarmony job configures its build environment
 - **THEN** it uses the selected SDK's native toolchain for the target compiler and linker
+
+### Requirement: OpenHarmony binary artifact
+The CI system SHALL archive the compiled OpenHarmony Tinymist binary in the same target-keyed layout consumed by downstream editor packaging jobs.
+
+#### Scenario: Successful OpenHarmony build
+- **WHEN** the OpenHarmony target build succeeds
+- **THEN** the workflow uploads an `aarch64-unknown-linux-ohos` binary artifact that downstream jobs can download by target name
+
+### Requirement: Experimental OpenHarmony VSIX artifacts
+The CI system SHALL include OpenHarmony ARM64 in the VS Code packaging matrix and produce downloadable Tinymist and Typst Preview VSIX artifacts containing the OpenHarmony binary.
+
+#### Scenario: Normal branch CI run
+- **WHEN** the OpenHarmony binary and shared VS Code assets are available
+- **THEN** the editor packaging matrix produces uniquely named OHOS ARM64 VSIX artifacts
+
+#### Scenario: GPU viewer unavailable
+- **WHEN** the OpenHarmony matrix entry packages editor extensions without an OpenHarmony GPU viewer binary
+- **THEN** GPU viewer download, packaging, and upload steps are skipped for that entry
+
+#### Scenario: Marketplace release
+- **WHEN** a tagged release or nightly publish workflow runs
+- **THEN** the experimental OHOS VSIX is excluded from Marketplace publishing until a supported platform identifier is established
