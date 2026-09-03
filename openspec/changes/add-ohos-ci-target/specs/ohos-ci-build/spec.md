@@ -34,7 +34,7 @@ The CI system SHALL sign the OpenHarmony Tinymist binary before creating any dow
 
 #### Scenario: CI signing
 - **WHEN** the release-mode OpenHarmony binary has been compiled
-- **THEN** the workflow invokes the pinned `ohos-binary-sign` Node.js package in self-sign mode before packaging it
+- **THEN** the workflow invokes the OpenHarmony SDK's `binary-sign-tool` dependency in self-sign mode before packaging it
 
 #### Scenario: Signing failure
 - **WHEN** the signing tool cannot sign the compiled binary

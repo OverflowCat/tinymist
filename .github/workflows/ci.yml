@@ -185,7 +185,7 @@ jobs:
         uses: openharmony-rs/setup-ohos-sdk@b312caf8a43bb836aa24c08f65f97e1f09a89cad # v1.0.1
         with:
           version: "5.1.0"
-          components: native
+          components: native;toolchains
       - name: Configure OpenHarmony toolchain
         env:
           OHOS_SDK_NATIVE: ${{ steps.ohos-sdk.outputs.ohos_sdk_native }}
@@ -201,14 +201,12 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Build Tinymist
         run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
-      - name: Install Node.js for OpenHarmony signing
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
       - name: Sign OpenHarmony binary
         run: |
-          npx --yes --package ohos-binary-sign@1.0.0 \
-            ohos-binary-sign sign \
+          set -euo pipefail
+          sign_tool="$OHOS_BASE_SDK_HOME/toolchains/lib/binary-sign-tool"
+          test -x "$sign_tool"
+          "$sign_tool" sign \
             -selfSign 1 \
             -inFile "target/$RUST_TARGET/release/tinymist" \
             -outFile "target/$RUST_TARGET/release/tinymist"
