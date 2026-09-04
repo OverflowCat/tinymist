@@ -225,7 +225,17 @@ jobs:
           sign_tool="$RUNNER_TEMP/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool"
           test -x "$qemu"
           test -x "$sign_tool"
-          "$qemu" -L "$OHOS_SDK_NATIVE/sysroot" "$sign_tool" sign \
+          signer_sysroot="$RUNNER_TEMP/ohos-sign-sysroot"
+          mkdir -p "$signer_sysroot/lib" "$signer_sysroot/usr/lib"
+          for runtime in ld-musl-aarch64.so.1 libc.so libc++.so; do
+            runtime_path=$(find "$OHOS_SDK_NATIVE/sysroot" -name "$runtime" -print -quit)
+            test -n "$runtime_path"
+            cp -L "$runtime_path" "$signer_sysroot/lib/$runtime"
+            ln -s "../../lib/$runtime" "$signer_sysroot/usr/lib/$runtime"
+          done
+          "$qemu" -L "$signer_sysroot" \
+            -E LD_LIBRARY_PATH=/lib:/usr/lib \
+            "$sign_tool" sign \
             -selfSign 1 \
             -inFile "target/$RUST_TARGET/release/tinymist" \
             -outFile "target/$RUST_TARGET/release/tinymist"
