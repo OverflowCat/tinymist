@@ -185,7 +185,7 @@ jobs:
         uses: openharmony-rs/setup-ohos-sdk@b312caf8a43bb836aa24c08f65f97e1f09a89cad # v1.0.1
         with:
           version: "5.1.0"
-          components: native;toolchains
+          components: native
       - name: Configure OpenHarmony toolchain
         env:
           OHOS_SDK_NATIVE: ${{ steps.ohos-sdk.outputs.ohos_sdk_native }}
@@ -201,17 +201,31 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Build Tinymist
         run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
+      - name: Install Node.js for OpenHarmony signing
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install OpenHarmony signing dependency
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/ohos-binary-sign" \
+            --no-save --no-package-lock ohos-binary-sign@1.0.0
+          sign_tool="$RUNNER_TEMP/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool"
+          test -f "$sign_tool"
+          chmod +x "$sign_tool"
       - name: Sign OpenHarmony binary
         run: |
           set -euo pipefail
-          sign_tool="$OHOS_BASE_SDK_HOME/toolchains/lib/binary-sign-tool"
-          if [ ! -f "$sign_tool" ]; then
-            sign_tool=$(find "$OHOS_BASE_SDK_HOME" -type f -name binary-sign-tool -print -quit)
+          qemu=$(command -v qemu-aarch64-static || command -v qemu-aarch64 || true)
+          if [ -z "$qemu" ]; then
+            sudo apt-get update
+            sudo apt-get install -y qemu-user-static
+            qemu=$(command -v qemu-aarch64-static)
           fi
-          test -n "$sign_tool"
-          chmod +x "$sign_tool"
+          sign_tool="$RUNNER_TEMP/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool"
+          test -x "$qemu"
           test -x "$sign_tool"
-          "$sign_tool" sign \
+          "$qemu" -L "$OHOS_SDK_NATIVE/sysroot" "$sign_tool" sign \
             -selfSign 1 \
             -inFile "target/$RUST_TARGET/release/tinymist" \
             -outFile "target/$RUST_TARGET/release/tinymist"

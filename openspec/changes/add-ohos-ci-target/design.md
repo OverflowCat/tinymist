@@ -30,7 +30,7 @@ The job will compile `tinymist-cli` for `aarch64-unknown-linux-ohos`, the primar
 
 ### Use the SDK native component and explicit linker configuration
 
-The setup action will install the native and toolchains SDK components. The job will export `CARGO_TARGET_AARCH64_UNKNOWN_LINUX_OHOS_LINKER` using the action's `ohos_sdk_native` output before invoking Cargo. The toolchains component supplies the host-side `binary-sign-tool` used for signing.
+The setup action will install the native SDK component. The job will export `CARGO_TARGET_AARCH64_UNKNOWN_LINUX_OHOS_LINKER` using the action's `ohos_sdk_native` output before invoking Cargo.
 
 ### Compile a distributable binary with the lockfile and workspace warning policy
 
@@ -38,7 +38,7 @@ The job will run a release build of `tinymist-cli` for `aarch64-unknown-linux-oh
 
 ### Sign the binary before distribution
 
-After the release build, the job will invoke the OpenHarmony SDK's host-side `toolchains/lib/binary-sign-tool` with `-selfSign 1`, signing the binary in place before creating the archive. The step finds the named tool under the SDK root and normalizes its executable bit because zip extraction can lose that mode. This is the underlying executable wrapped by `ohos-binary-sign`; the npm wrapper itself only ships an `openharmony-arm64` executable and rejects the Ubuntu x64 runner. This keeps both the standalone OHOS artifact and the VSIX payload signed while avoiding unprovided certificate secrets for the experimental CI-only packages. A missing tool or signing error fails the job before upload.
+After the release build, the job will install Node.js 24 and the pinned `ohos-binary-sign@1.0.0` npm package, then invoke the package's bundled `platform/openharmony-arm64/binary-sign-tool` dependency with `-selfSign 1`. Because that dependency is an OpenHarmony ARM64 executable, the workflow runs it under `qemu-aarch64` with the SDK sysroot on the Ubuntu x64 runner; it does not load the wrapper's host-platform guard. This signs the binary in place before creating the archive, keeping both the standalone OHOS artifact and the VSIX payload signed while avoiding unprovided certificate secrets for the experimental CI-only packages. A missing tool, emulator, or signing error fails the job before upload.
 
 ### Make the release workflow wait for the OHOS artifact
 
@@ -58,4 +58,5 @@ The OHOS entry will package the Tinymist and Typst Preview extensions but skip t
 - [VS Code tooling rejects `ohos-arm64` as an unknown target] -> Use `linux-arm64` only for VSIX metadata while retaining the `ohos-arm64` artifact label.
 - [Using `linux-arm64` metadata could collide with the GNU/Linux package] -> Keep OHOS VSIX artifacts CI-only and uniquely named until the target editor defines a distinct platform identifier.
 - [Self-signed binaries may not satisfy a production device trust policy] -> Keep the packages experimental and out of Marketplace/Open VSX publication; replace self-signing with maintainer-provided signing credentials when a production distribution policy is established.
-- [The npm wrapper only supports OpenHarmony ARM64 hosts] -> Use its `binary-sign-tool` dependency from the SDK's Linux toolchains component on the Ubuntu cross-compilation runner.
+- [The npm wrapper only supports OpenHarmony ARM64 hosts] -> Extract its bundled `binary-sign-tool` dependency and execute it under QEMU with the SDK sysroot on the Ubuntu cross-compilation runner.
+- [QEMU or the target sysroot may not provide all runtime behavior required by the signer] -> Keep the emulated invocation isolated to signing and fail before upload if it cannot run; the target binary itself remains unmodified unless signing succeeds.
