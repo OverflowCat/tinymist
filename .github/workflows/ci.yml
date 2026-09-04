@@ -205,6 +205,11 @@ jobs:
         run: |
           set -euo pipefail
           sign_tool="$OHOS_BASE_SDK_HOME/toolchains/lib/binary-sign-tool"
+          if [ ! -f "$sign_tool" ]; then
+            sign_tool=$(find "$OHOS_BASE_SDK_HOME" -type f -name binary-sign-tool -print -quit)
+          fi
+          test -n "$sign_tool"
+          chmod +x "$sign_tool"
           test -x "$sign_tool"
           "$sign_tool" sign \
             -selfSign 1 \

@@ -38,7 +38,7 @@ The job will run a release build of `tinymist-cli` for `aarch64-unknown-linux-oh
 
 ### Sign the binary before distribution
 
-After the release build, the job will invoke the OpenHarmony SDK's host-side `toolchains/lib/binary-sign-tool` with `-selfSign 1`, signing the binary in place before creating the archive. This is the underlying executable wrapped by `ohos-binary-sign`; the npm wrapper itself only ships an `openharmony-arm64` executable and rejects the Ubuntu x64 runner. This keeps both the standalone OHOS artifact and the VSIX payload signed while avoiding unprovided certificate secrets for the experimental CI-only packages. A signing error fails the job before upload.
+After the release build, the job will invoke the OpenHarmony SDK's host-side `toolchains/lib/binary-sign-tool` with `-selfSign 1`, signing the binary in place before creating the archive. The step finds the named tool under the SDK root and normalizes its executable bit because zip extraction can lose that mode. This is the underlying executable wrapped by `ohos-binary-sign`; the npm wrapper itself only ships an `openharmony-arm64` executable and rejects the Ubuntu x64 runner. This keeps both the standalone OHOS artifact and the VSIX payload signed while avoiding unprovided certificate secrets for the experimental CI-only packages. A missing tool or signing error fails the job before upload.
 
 ### Make the release workflow wait for the OHOS artifact
 
