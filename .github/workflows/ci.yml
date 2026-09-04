@@ -199,8 +199,6 @@ jobs:
             echo "CXX_aarch64_unknown_linux_ohos=$toolchain_bin/aarch64-unknown-linux-ohos-clang++"
             echo "AR_aarch64_unknown_linux_ohos=$toolchain_bin/llvm-ar"
           } >> "$GITHUB_ENV"
-      - name: Build Tinymist
-        run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
       - name: Install Node.js for OpenHarmony signing
         uses: actions/setup-node@v4
         with:
@@ -213,32 +211,24 @@ jobs:
           sign_tool="$RUNNER_TEMP/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool"
           test -f "$sign_tool"
           chmod +x "$sign_tool"
+      - name: Enable ARM64 emulation
+        run: docker run --privileged --rm tonistiigi/binfmt --install arm64
+      - name: Build Tinymist
+        run: cargo build --locked --release -p tinymist-cli --bin tinymist --target "$RUST_TARGET"
       - name: Sign OpenHarmony binary
         run: |
           set -euo pipefail
-          qemu=$(command -v qemu-aarch64-static || command -v qemu-aarch64 || true)
-          if [ -z "$qemu" ]; then
-            sudo apt-get update
-            sudo apt-get install -y qemu-user-static
-            qemu=$(command -v qemu-aarch64-static)
-          fi
           sign_tool="$RUNNER_TEMP/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool"
-          test -x "$qemu"
           test -x "$sign_tool"
-          signer_sysroot="$RUNNER_TEMP/ohos-sign-sysroot"
-          mkdir -p "$signer_sysroot/lib" "$signer_sysroot/usr/lib"
-          for runtime in ld-musl-aarch64.so.1 libc.so libc++.so; do
-            runtime_path=$(find "$OHOS_SDK_NATIVE/sysroot" -name "$runtime" -print -quit)
-            test -n "$runtime_path"
-            cp -L "$runtime_path" "$signer_sysroot/lib/$runtime"
-            ln -s "../../lib/$runtime" "$signer_sysroot/usr/lib/$runtime"
-          done
-          "$qemu" -L "$signer_sysroot" \
-            -E LD_LIBRARY_PATH=/lib:/usr/lib \
-            "$sign_tool" sign \
+          docker run --rm --platform linux/arm64 \
+            --volume "$RUNNER_TEMP/ohos-binary-sign:/opt/ohos-binary-sign:ro" \
+            --volume "$GITHUB_WORKSPACE:/work" \
+            --workdir /work \
+            ghcr.io/hqzing/dockerharmony:latest \
+            /opt/ohos-binary-sign/node_modules/ohos-binary-sign/platform/openharmony-arm64/binary-sign-tool sign \
             -selfSign 1 \
-            -inFile "target/$RUST_TARGET/release/tinymist" \
-            -outFile "target/$RUST_TARGET/release/tinymist"
+            -inFile "/work/target/$RUST_TARGET/release/tinymist" \
+            -outFile "/work/target/$RUST_TARGET/release/tinymist"
       - name: Package Tinymist
         run: |
           install -Dm755 \
